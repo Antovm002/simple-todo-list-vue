@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fontawesome.com/icons/trash-can?f=classic&s=solid">
+
+    <title>Document</title>
+</head>
+
+<body>
+
+    <h1>My Task-List</h1>
+    <div id="app"></div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    
+    <script>
+        Vue.component('todo-add',{
+            template: `
+                <div class="bottom-one">
+                    <input type="text" v-model="title"  @keydown.enter="onClick"/>
+                    <button @click="onClick">+ New task</button>    
+                </div>
+            `,
+            data: function () {
+                return{
+                    title: null
+                }
+            },
+            methods: {
+                onClick: function(){
+                    this.$emit('new', {title: this.title });
+                    this.title = null;
+                }
+            }
+        }),
+
+        Vue.component('todo-item',{
+            props: ['todo'],
+            data: function() {
+                return {
+                    isEditing: false,
+                    editedTitle: this.todo.title
+                };
+            },
+            template: `
+                <div>
+                    <li :class="{ 'completed': todo.completed }">
+                        <div>
+                            <input v-if="!isEditing" type="checkbox" v-model="todo.completed">
+                            <span v-show="!isEditing" @dblclick="toggleEdit">{{ todo.title }}</span>
+                            <input v-if="isEditing" type="text" v-model="editedTitle" @blur="stopEditing" @keydown.enter="stopEditing">
+                        </div>
+                        <div>
+                            <button @click="toggleEdit">{{ isEditing ? 'Save' : 'Edit' }}</button>
+                            <button @click="removeTask" class="trash"> <svg xmlns="http://www.w3.org/2000/svg" height="20px" width="18px" viewBox="0 0 448 512"><path fill="rgb(171, 106, 236)" d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z"/></svg> </button>
+                        </div>
+                    </li>
+                </div>
+            `,
+            methods: {
+                removeTask: function() {
+                    this.$emit('remove');
+                },
+                toggleEdit: function() {
+                    this.isEditing = !this.isEditing;
+                    if (!this.isEditing) {
+                        this.stopEditing();
+                    }
+                },
+                stopEditing: function() {
+                    if (this.isEditing && this.editedTitle.trim() !== "") {
+                        this.$emit('edit', { index: this.$vnode.key, title: this.editedTitle });
+                    } else if (this.isEditing) {
+                        alert("Ingrese una tarea valida.");
+                    }
+                    this.isEditing = false;
+                }
+            }
+        });
+
+        Vue.component('todo-list', {
+            props: ['todos'],
+            template: `
+                <ul>
+                    <todo-item
+                        v-for="(todo,index) in todos"
+                        :key="index"
+                        :todo="todo"
+                        @remove="removeTodo(index)"
+                        @edit="editTodo">
+                    </todo-item>    
+                </ul>
+            `,
+            methods: {
+                removeTodo: function(index) {
+                    this.$emit('remove', index);
+                },
+                editTodo: function(editedTodo) {
+                    this.$emit('edit', editedTodo);
+                }
+            }
+        });
+
+        const app = new Vue({
+            el: '#app',
+            data: {
+                todos: [
+                    {title: 'example task', completed: false},
+                ]
+            },
+            methods: {
+                addNewTodo: function(todo) {
+                    const existingTodo = this.todos.find(t => t.title === todo.title);
+                    if (!existingTodo) {
+                        if (todo.title.trim() !== "") {
+                            this.todos.push(todo);
+                        }
+                    } else {
+                        alert("Ya existe una tarea con este nombre.");
+                    }
+                },
+                removeTodo: function(index) {
+                    this.todos.splice(index, 1);
+                },
+                editTodo: function(editedTodo) {
+                    this.todos[editedTodo.index].title = editedTodo.title;
+                }
+            },
+            template: `
+                <div>  
+                    <todo-list :todos="todos" @remove="removeTodo" @edit="editTodo"></todo-list>
+                    <todo-add @new="addNewTodo"></todo-add>    
+                </div>
+            `
+        });
+    </script>
+</body>
+
+<style>
+
+.trash{
+    background-color: whitesmoke;
+    
+}
+h1{
+    margin: 5px;
+    width: 30%;
+    padding: 15px 0px 15px 10px;
+    background-color: rgb(171, 106, 236);
+    color: whitesmoke;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    box-shadow: 6px 6px 10px rgba(27, 26, 26, 0.2);
+
+}
+button {
+    font-weight: bold;
+    background-color: rgb(171, 106, 236);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    color: white;
+    cursor: pointer;    
+}
+
+input[type="text"] {
+    border: 2px solid rgb(171, 106, 236);
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    
+}
+
+input:focus {
+    outline: solid rgb(171, 106, 236);
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li div {
+    display: flex;
+    align-items: center;
+}
+
+
+li {
+    width: 65vh;
+    background-color: whitesmoke;
+    color: rgb(171, 106, 236);
+    padding: 10px 10px 10px 0px;
+    margin: 10px 0px 10px 0px;
+    display: flex;
+    align-items: center;
+    word-wrap: break-word;
+    justify-content: space-between;
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    font-size: large;
+    font-weight: bold;
+    box-shadow: 6px 6px 10px rgba(27, 26, 26, 0.2);
+    
+}
+
+li input[type="checkbox"] {
+    border: 2px solid #ccc; 
+    outline: none; 
+    width: 16px; 
+    height: 16px; 
+}
+
+li.completed span {
+    text-decoration: line-through;
+    color: rgb(171, 106, 236); 
+}
+body {
+    display: flex;
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    text-align: center; 
+    background-color: #f0f0f0;
+}
+</style>
+</html>
