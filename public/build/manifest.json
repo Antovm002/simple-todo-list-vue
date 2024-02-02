@@ -1,0 +1,6 @@
+{
+  "build/app.js": "/build/app.js",
+  "build/styles.css": "/build/styles.css",
+  "build/runtime.js": "/build/runtime.js",
+  "build/vendors-node_modules_vue-loader_dist_exportHelper_js-node_modules_vue-router_dist_vue-router_mjs.js": "/build/vendors-node_modules_vue-loader_dist_exportHelper_js-node_modules_vue-router_dist_vue-router_mjs.js"
+}
